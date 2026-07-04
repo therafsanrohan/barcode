@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Universal Barcode Generator – All Types | SVG Export</title>
+  <meta name="description" content="Generate 12 globally used barcode types: EAN-13, UPC-A, Code 128, Code 39, ITF-14, QR Code, PDF417, Codabar, MSI, and more. Download as SVG." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:#0a0e1a; --surface:#111728; --card:#161d30; --border:rgba(99,130,255,.18);
+      --accent:#6382ff; --accent2:#a78bfa; --success:#34d399; --warn:#f59e0b;
+      --text:#e2e8f0; --muted:#7c8aab; --input-bg:#0d1220; --glow:rgba(99,130,255,.25);
+    }
+    html { scroll-behavior:smooth; }
+    body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; overflow-x:hidden; }
+    body::before {
+      content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% -20%,rgba(99,130,255,.18) 0%,transparent 70%),
+        linear-gradient(rgba(99,130,255,.04) 1px,transparent 1px),
+        linear-gradient(90deg,rgba(99,130,255,.04) 1px,transparent 1px);
+      background-size:auto,40px 40px,40px 40px;
+    }
+    .container { position:relative; z-index:1; max-width:760px; margin:0 auto; padding:44px 20px 80px; }
+
+    /* ── Header ── */
+    header { text-align:center; margin-bottom:44px; }
+    .logo-badge {
+      display:inline-flex; align-items:center; gap:8px;
+      background:linear-gradient(135deg,rgba(99,130,255,.15),rgba(167,139,250,.1));
+      border:1px solid rgba(99,130,255,.3); border-radius:100px;
+      padding:6px 16px; font-size:12px; font-weight:600; letter-spacing:.08em;
+      text-transform:uppercase; color:var(--accent); margin-bottom:22px;
+    }
+    header h1 {
+      font-size:clamp(1.9rem,5vw,2.7rem); font-weight:700; line-height:1.15;
+      background:linear-gradient(135deg,#fff 30%,var(--accent2));
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+      margin-bottom:12px;
+    }
+    header p { color:var(--muted); font-size:15px; line-height:1.65; max-width:520px; margin:auto; }
+
+    /* ── Card ── */
+    .card {
+      background:var(--card); border:1px solid var(--border); border-radius:20px;
+      padding:30px 28px; margin-bottom:20px;
+      box-shadow:0 8px 40px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.04);
+    }
+    .card-title {
+      font-size:12px; font-weight:600; letter-spacing:.08em; text-transform:uppercase;
+      color:var(--accent); margin-bottom:20px; display:flex; align-items:center; gap:8px;
+    }
+    .card-title::after { content:''; flex:1; height:1px; background:linear-gradient(90deg,var(--border),transparent); }
+
+    /* ── Type selector ── */
+    .cat-label { font-size:11px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin:18px 0 9px; display:flex; align-items:center; gap:7px; }
+    .cat-label:first-child { margin-top:0; }
+    .type-pills { display:flex; flex-wrap:wrap; gap:7px; }
+    .type-pill {
+      padding:7px 13px; background:rgba(99,130,255,.07); border:1px solid var(--border);
+      border-radius:8px; color:var(--muted); font-size:12.5px; font-weight:500;
+      cursor:pointer; transition:all .2s; white-space:nowrap; user-select:none;
+    }
+    .type-pill:hover { background:rgba(99,130,255,.15); color:var(--text); border-color:rgba(99,130,255,.4); }
+    .type-pill.active { background:rgba(99,130,255,.2); border-color:var(--accent); color:var(--accent); box-shadow:0 0 0 1px rgba(99,130,255,.3); }
+
+    /* ── Navigation ── */
+    .app-nav { position:sticky; top:0; z-index:100; background:rgba(10,14,26,.92); backdrop-filter:blur(20px) saturate(180%); border-bottom:1px solid rgba(99,130,255,.12); }
+    .nav-inner { max-width:760px; margin:0 auto; display:flex; align-items:center; padding:0 20px; height:52px; }
+    .nav-brand { display:flex; align-items:center; gap:8px; font-size:13px; font-weight:700; color:var(--text); margin-right:auto; letter-spacing:-.01em; }
+    .nav-links { display:flex; gap:3px; }
+    .nav-link { display:flex; align-items:center; gap:6px; padding:6px 11px; border-radius:8px; font-size:12.5px; font-weight:500; color:var(--muted); text-decoration:none; transition:all .2s; white-space:nowrap; }
+    .nav-link:hover { background:rgba(99,130,255,.1); color:var(--text); }
+    .nav-link.active { background:rgba(99,130,255,.15); color:var(--accent); }
+    @media(max-width:460px) { .nav-brand .brand-label{display:none;} .nav-link .link-label{display:none;} }
+
+    /* ── Type info box ── */
+    .type-info-box {
+      background:rgba(99,130,255,.05); border:1px solid rgba(99,130,255,.15);
+      border-radius:12px; padding:16px; margin-top:18px;
+      animation:fadeSlide .25s ease;
+    }
+    @keyframes fadeSlide { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
+    .tib-header { display:flex; align-items:center; gap:10px; margin-bottom:8px; flex-wrap:wrap; }
+    .tib-name { font-size:16px; font-weight:700; color:var(--text); }
+    .tib-badge {
+      background:rgba(99,130,255,.12); border:1px solid rgba(99,130,255,.25);
+      border-radius:6px; padding:3px 9px; font-size:11px; color:var(--accent); font-weight:500;
+    }
+    .tib-std { font-size:11px; color:var(--muted); margin-left:auto; font-family:'JetBrains Mono',monospace; }
+    .tib-desc { font-size:13px; color:var(--muted); line-height:1.6; margin-bottom:12px; }
+    .tib-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .tib-item { background:rgba(255,255,255,.03); border-radius:7px; padding:9px 11px; }
+    .tib-lbl { font-size:10px; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); margin-bottom:3px; }
+    .tib-val { font-size:12px; color:var(--text); font-family:'JetBrains Mono',monospace; line-height:1.4; }
+    @media(max-width:480px) { .tib-grid{grid-template-columns:1fr;} .tib-std{margin-left:0;} }
+
+    /* ── Form ── */
+    .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    .form-grid .full { grid-column:1/-1; }
+    .field { display:flex; flex-direction:column; gap:7px; }
+    label { font-size:11.5px; font-weight:500; color:var(--muted); letter-spacing:.04em; text-transform:uppercase; }
+    input, select {
+      background:var(--input-bg); border:1px solid var(--border); border-radius:10px;
+      padding:11px 13px; color:var(--text); font-family:inherit; font-size:14px; outline:none;
+      transition:border-color .2s,box-shadow .2s; width:100%;
+    }
+    input:focus, select:focus { border-color:var(--accent); box-shadow:0 0 0 3px var(--glow); }
+    input::placeholder { color:var(--muted); }
+    input[type="date"]::-webkit-calendar-picker-indicator { filter:invert(.5); }
+
+    .canvas-row { display:flex; align-items:flex-end; gap:8px; }
+    .canvas-row .field { flex:1; }
+    .canvas-x { color:var(--muted); padding-bottom:12px; font-size:13px; }
+    .canvas-unit { color:var(--muted); padding-bottom:12px; font-size:13px; }
+
+    .ec-row { display:none; margin-top:0; }
+    .ec-row.visible { display:block; }
+
+    .data-note {
+      font-size:11.5px; color:var(--warn); background:rgba(245,158,11,.07);
+      border:1px solid rgba(245,158,11,.2); border-radius:7px; padding:8px 11px; margin-top:6px;
+    }
+
+    /* ── Buttons ── */
+    .btn {
+      display:inline-flex; align-items:center; justify-content:center; gap:8px;
+      border:none; border-radius:12px; cursor:pointer; font-family:inherit;
+      font-size:14px; font-weight:600; transition:transform .15s,box-shadow .15s,opacity .15s; padding:14px 24px;
+    }
+    .btn:active { transform:scale(.97); }
+    .btn-primary {
+      background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff;
+      box-shadow:0 4px 20px rgba(99,130,255,.35); width:100%; font-size:15px; padding:15px; margin-top:20px;
+    }
+    .btn-primary:hover { box-shadow:0 6px 30px rgba(99,130,255,.55); transform:translateY(-1px); }
+    .btn-download {
+      background:linear-gradient(135deg,#0d7a4e,var(--success)); color:#fff;
+      box-shadow:0 4px 16px rgba(52,211,153,.3); padding:11px 20px; font-size:13px; flex:1;
+    }
+    .btn-download:hover { box-shadow:0 6px 24px rgba(52,211,153,.5); transform:translateY(-1px); }
+    .btn-copy {
+      background:rgba(99,130,255,.1); border:1px solid rgba(99,130,255,.25);
+      color:var(--accent); padding:11px 20px; font-size:13px; flex:1;
+    }
+    .btn-copy:hover { background:rgba(99,130,255,.2); }
+
+    /* ── Preview ── */
+    .preview-wrap { display:none; flex-direction:column; gap:16px; }
+    .preview-wrap.visible { display:flex; }
+    .barcode-stage {
+      background:#fff; border-radius:12px; padding:20px;
+      display:flex; align-items:center; justify-content:center;
+      min-height:80px; overflow:auto;
+    }
+    .barcode-stage svg { display:block; max-width:100%; height:auto; }
+    .canvas-label { font-size:11px; color:var(--muted); text-align:center; font-family:'JetBrains Mono',monospace; }
+    .encoded-box {
+      background:var(--input-bg); border:1px solid var(--border); border-radius:9px;
+      padding:10px 13px; font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--muted);
+      line-height:1.6; word-break:break-all;
+    }
+    .action-row { display:flex; gap:10px; flex-wrap:wrap; }
+    .empty-state { text-align:center; padding:28px 0; }
+    .empty-state p { color:var(--muted); font-size:14px; }
+    .empty-state p+p { font-size:12px; margin-top:4px; }
+
+    /* ── Toast ── */
+    .toast {
+      position:fixed; bottom:28px; left:50%; transform:translateX(-50%) translateY(16px);
+      background:var(--success); color:#000; padding:9px 22px; border-radius:100px;
+      font-size:13px; font-weight:600; opacity:0; pointer-events:none;
+      transition:opacity .3s,transform .3s; z-index:9999;
+    }
+    .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+    ::-webkit-scrollbar { width:6px; }
+    ::-webkit-scrollbar-track { background:var(--bg); }
+    ::-webkit-scrollbar-thumb { background:var(--border); border-radius:99px; }
+
+    @media(max-width:520px) {
+      .form-grid { grid-template-columns:1fr; }
+      .form-grid .full { grid-column:1; }
+      .card { padding:20px 16px; }
+    }
+
+    /* ── Mode tabs ── */
+    .mode-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 22px; }
+    .mode-tab {
+      display: flex; align-items: center; gap: 6px;
+      padding: 8px 14px; background: rgba(99,130,255,.07); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--muted); font-size: 13px; font-weight: 500;
+      cursor: pointer; transition: all .2s; user-select: none;
+    }
+    .mode-tab:hover { background: rgba(99,130,255,.14); color: var(--text); }
+    .mode-tab.active { background: rgba(99,130,255,.18); border-color: var(--accent); color: var(--accent); }
+
+    /* ── Panels ── */
+    .panel { display: none; }
+    .panel.active { display: block; }
+    textarea { resize: vertical; min-height: 90px; line-height: 1.5; background: var(--input-bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; color: var(--text); font-family: inherit; font-size: 14px; outline: none; transition: border-color .2s, box-shadow .2s; width: 100%; }
+    textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--glow); }
+
+    /* ── Canvas Row ── */
+    .canvas-row { display: flex; align-items: flex-end; gap: 8px; }
+    .canvas-row .field { flex: 1; }
+    .canvas-x { color: var(--muted); padding-bottom: 12px; font-size: 13px; }
+    .canvas-unit { color: var(--muted); padding-bottom: 12px; font-size: 13px; }
+  </style>
+</head>
+<body>
+
+<nav class="app-nav">
+  <div class="nav-inner">
+    <div class="nav-brand">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="4" width="3" height="16" rx="0.5" opacity=".9"/><rect x="7" y="4" width="1.5" height="16" rx="0.5"/><rect x="10.5" y="4" width="3" height="16" rx="0.5" opacity=".85"/><rect x="15.5" y="4" width="1.5" height="16" rx="0.5"/><rect x="19" y="4" width="3" height="16" rx="0.5" opacity=".9"/></svg>
+      <span class="brand-label">Barcode Suite</span>
+    </div>
+    <div class="nav-links">
+      <a href="index.html" class="nav-link">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="4" width="2.5" height="16" rx="0.4"/><rect x="6" y="4" width="1" height="16" rx="0.4"/><rect x="8.5" y="4" width="2.5" height="16" rx="0.4"/><rect x="12.5" y="4" width="1" height="16" rx="0.4"/><rect x="15" y="4" width="2" height="16" rx="0.4"/><rect x="18.5" y="4" width="1" height="16" rx="0.4"/><rect x="21" y="4" width="1" height="16" rx="0.4"/></svg>
+        <span class="link-label">PDF417</span>
+      </a>
+      <a href="universal-barcode.html" class="nav-link active">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><rect x="3" y="10" width="18" height="4" rx="1"/><rect x="3" y="16" width="18" height="4" rx="1"/></svg>
+        <span class="link-label">Universal</span>
+      </a>
+      <a href="qrcode-generator.html" class="nav-link">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="5.5" y="5.5" width="2" height="2" fill="currentColor" stroke="none"/><rect x="16.5" y="5.5" width="2" height="2" fill="currentColor" stroke="none"/><rect x="5.5" y="16.5" width="2" height="2" fill="currentColor" stroke="none"/><rect x="14" y="14" width="3" height="3" fill="currentColor" stroke="none"/><rect x="18" y="18" width="3" height="3" fill="currentColor" stroke="none"/></svg>
+        <span class="link-label">QR Code</span>
+      </a>
+    </div>
+  </div>
+</nav>
+
+<div class="container">
+  <header>
+    <div class="logo-badge">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><rect x="3" y="10" width="18" height="4" rx="1"/><rect x="3" y="16" width="18" height="4" rx="1"/></svg>
+      Universal Barcode Generator
+    </div>
+    <h1>All Global Barcode Types</h1>
+    <p>12 internationally used barcode standards — GS1 Retail, Industrial, and 2D Matrix. Export any as a scalable SVG file.</p>
+  </header>
+
+  <!-- Type Selector -->
+  <div class="card">
+    <div class="card-title">Select Barcode Type</div>
+    <div id="typeSelector"></div>
+    <div id="typeInfoBox" style="display:none"></div>
+  </div>
+
+  <!-- Input Form -->
+  <div class="card">
+    <div class="card-title" id="formCardTitle">Input Data</div>
+
+    <div class="mode-tabs" id="modeTabs" style="display:none; margin-bottom: 22px;">
+      <button type="button" class="mode-tab active" data-mode="identity">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M16 10h2M16 14h2M8 12a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM8 12v2"/></svg>
+        Identity
+      </button>
+      <button type="button" class="mode-tab" data-mode="text">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Free Text
+      </button>
+      <button type="button" class="mode-tab" data-mode="url">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        URL
+      </button>
+    </div>
+
+    <form id="barcodeForm" novalidate>
+      <!-- Panel: 1D Barcode Data -->
+      <div class="panel active" id="panel-1d">
+        <div class="field full">
+          <label for="fRawData" id="lblRawData">Barcode Data</label>
+          <input id="fRawData" type="text" placeholder="Enter barcode data..." />
+        </div>
+      </div>
+
+      <!-- Panel: Identity -->
+      <div class="panel" id="panel-identity">
+        <div class="form-grid">
+          <div class="field full">
+            <label for="fname">Full Name</label>
+            <input id="fname" type="text" placeholder="e.g. R. Uddin" autocomplete="name"/>
+          </div>
+          <div class="field">
+            <label for="fserial">Serial Number</label>
+            <input id="fserial" type="text" placeholder="e.g. 20240001"/>
+          </div>
+          <div class="field">
+            <label for="fidnum">Identify Number</label>
+            <input id="fidnum" type="text" placeholder="e.g. 9981234"/>
+          </div>
+          <div class="field">
+            <label for="fdob">Date of Birth</label>
+            <input id="fdob" type="date"/>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel: Free Text -->
+      <div class="panel" id="panel-text">
+        <div class="field">
+          <label for="fpText">Text Content</label>
+          <textarea id="fpText" placeholder="Enter any text or custom data..."></textarea>
+        </div>
+      </div>
+
+      <!-- Panel: URL -->
+      <div class="panel" id="panel-url">
+        <div class="field">
+          <label for="fpUrl">URL / Link</label>
+          <input id="fpUrl" type="url" placeholder="https://example.com"/>
+        </div>
+      </div>
+
+      <div class="form-grid" style="margin-top: 18px;">
+        <div id="dataNote" style="display:none" class="full"></div>
+
+        <!-- Canvas size -->
+        <div class="field full">
+          <label>Canvas Size (px)</label>
+          <div class="canvas-row">
+            <div class="field"><input id="canvasW" type="number" value="300" min="30" max="2000" placeholder="Width"/></div>
+            <span class="canvas-x">×</span>
+            <div class="field"><input id="canvasH" type="number" value="100" min="10" max="2000" placeholder="Height"/></div>
+            <span class="canvas-unit">px</span>
+          </div>
+        </div>
+
+        <!-- EC Level (conditional) -->
+        <div class="field ec-row" id="ecRow">
+          <label for="ecLevel">Error Correction Level</label>
+          <select id="ecLevel">
+            <option value="M">M – Medium 15% (Default)</option>
+            <option value="L">L – Low 7%</option>
+            <option value="Q">Q – Quartile 25%</option>
+            <option value="H">H – High 30%</option>
+          </select>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary" id="generateBtn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+        </svg>
+        Generate Barcode
+      </button>
+
+      <div class="info-note" id="tipBanner" style="font-size:11.5px; color:var(--muted); background:rgba(99,130,255,.05); border:1px solid rgba(99,130,255,.15); border-radius:8px; padding:10px 12px; margin-top:16px; display:flex; align-items:center; gap:8px;">
+        <span>💡</span>
+        <span id="tipBannerText"><strong>Pro Tip:</strong> Keep inputs brief and use a larger canvas (e.g. 270px width) to make the barcode clean, sharp, and easy to scan.</span>
+      </div>
+    </form>
+  </div>
+
+  <!-- Preview -->
+  <div class="card">
+    <div class="card-title">Preview &amp; Export</div>
+    <div class="preview-wrap" id="previewWrap">
+      <div class="barcode-stage" id="barcodeStage"></div>
+      <div class="canvas-label" id="canvasLabel"></div>
+      <details>
+        <summary style="cursor:pointer;font-size:12px;color:var(--muted);user-select:none;">Show encoded data</summary>
+        <div class="encoded-box" id="encodedData" style="margin-top:8px;"></div>
+      </details>
+      <div class="action-row">
+        <button class="btn btn-download" id="downloadBtn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          Download SVG
+        </button>
+        <button class="btn btn-copy" id="copyBtn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+          </svg>
+          Copy SVG
+        </button>
+      </div>
+    </div>
+    <div class="empty-state" id="emptyState">
+      <svg width="52" height="52" viewBox="0 0 52 52" fill="none" style="margin:0 auto 14px;display:block;opacity:.3">
+        <rect x="4" y="8" width="4" height="36" rx="1" fill="#6382ff"/>
+        <rect x="11" y="8" width="2" height="36" rx="1" fill="#6382ff"/>
+        <rect x="15" y="8" width="6" height="36" rx="1" fill="#6382ff"/>
+        <rect x="24" y="8" width="2" height="36" rx="1" fill="#a78bfa"/>
+        <rect x="28" y="8" width="5" height="36" rx="1" fill="#6382ff"/>
+        <rect x="35" y="8" width="2" height="36" rx="1" fill="#a78bfa"/>
+        <rect x="40" y="8" width="5" height="36" rx="1" fill="#6382ff"/>
+        <rect x="47" y="8" width="2" height="36" rx="1" fill="#6382ff"/>
+      </svg>
+      <p>Select a barcode type and fill in the form above</p>
+      <p>Your barcode will appear here</p>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =====================================================================
+   BARCODE TYPE DEFINITIONS
+   ===================================================================== */
+const TYPES = [
+  // GS1 / Retail
+  { id:'EAN13',   name:'EAN-13',      cat:'gs1',  catLabel:'GS1 / Retail',  region:'Worldwide',    std:'ISO/IEC 15420',
+    desc:'The standard worldwide retail barcode. Found on virtually all consumer products globally including groceries, electronics, and books.',
+    uses:'Consumer goods, Books (ISBN-13), Magazines (ISSN)', fmt:'n12', note:'12 digits — check digit auto-calculated',
+    engine:'jsb', jbFmt:'EAN13',   dw:200, dh:120, hasEC:false },
+
+  { id:'EAN8',    name:'EAN-8',       cat:'gs1',  region:'Worldwide',    std:'ISO/IEC 15420',
+    desc:'Compressed EAN barcode designed for small packages where EAN-13 is too large to fit.',
+    uses:'Small products, cosmetics, small packaging', fmt:'n7', note:'7 digits — check digit auto-calculated',
+    engine:'jsb', jbFmt:'EAN8',    dw:150, dh:100, hasEC:false },
+
+  { id:'UPCA',    name:'UPC-A',       cat:'gs1',  region:'USA / Canada', std:'GS1 US / ISO 15420',
+    desc:'Primary retail barcode in North America. The Universal Product Code used on virtually all US and Canadian retail products.',
+    uses:'US/Canada retail, general merchandise, grocery', fmt:'n11', note:'11 digits — check digit auto-calculated',
+    engine:'jsb', jbFmt:'UPC',     dw:200, dh:120, hasEC:false },
+
+  { id:'UPCE',    name:'UPC-E',       cat:'gs1',  region:'USA / Canada', std:'GS1 US',
+    desc:'Zero-suppressed compact version of UPC-A for small packages where space is limited.',
+    uses:'Small retail packages, newspapers, magazines', fmt:'n6', note:'6 digits (zero-suppressed UPC)',
+    engine:'jsb', jbFmt:'UPCE',    dw:130, dh:100, hasEC:false },
+
+  { id:'ITF14',   name:'ITF-14',      cat:'gs1',  region:'Worldwide',    std:'GS1 / ISO 16390',
+    desc:'GS1 standard for outer shipping case and pallet identification using Interleaved 2 of 5 symbology.',
+    uses:'Shipping cases, pallets, warehouse logistics', fmt:'n13', note:'13 digits — check digit auto-calculated',
+    engine:'jsb', jbFmt:'ITF14',   dw:320, dh:120, hasEC:false },
+
+  // Industrial / General
+  { id:'CODE128', name:'Code 128',    cat:'ind',  catLabel:'Industrial / General', region:'Global', std:'ISO/IEC 15417',
+    desc:'The most widely used linear barcode globally. Encodes the full 128 ASCII character set at very high density. Used across all industries.',
+    uses:'Shipping labels, healthcare, retail, manufacturing, supply chain', fmt:'full', note:'Any ASCII character (128 chars)',
+    engine:'jsb', jbFmt:'CODE128', dw:300, dh:100, hasEC:false },
+
+  { id:'CODE39',  name:'Code 39',     cat:'ind',  region:'USA / Global', std:'ISO/IEC 16388',
+    desc:'One of the first barcodes to encode alphanumeric data. Self-checking and simple to implement. Widely adopted in industrial and military applications.',
+    uses:'Military (DoD), automotive parts, healthcare, industrial ID cards', fmt:'c39', note:'A-Z, 0-9, space, - . $ / + %',
+    engine:'jsb', jbFmt:'CODE39',  dw:300, dh:100, hasEC:false },
+
+  { id:'CODABAR', name:'Codabar',     cat:'ind',  region:'USA / Japan',  std:'AIM / ANSI / NW-7',
+    desc:'Reliable self-checking barcode used in medical and library systems since the 1970s. Also known as NW-7 in Japan.',
+    uses:'Libraries, blood banks, FedEx, photo labs, healthcare, Japanese retail', fmt:'cbar', note:'Digits 0-9 and - $ : / . +',
+    engine:'jsb', jbFmt:'codabar', dw:280, dh:100, hasEC:false },
+
+  { id:'MSI',     name:'MSI Plessey', cat:'ind',  region:'USA / Europe', std:'MSI Data Corp',
+    desc:'Developed by MSI Data Corporation for marking retail shelves and managing inventory in grocery stores.',
+    uses:'Retail shelf marking, grocery stores, inventory management', fmt:'msi', note:'Digits 0-9 only',
+    engine:'jsb', jbFmt:'MSI',     dw:260, dh:100, hasEC:false },
+
+  { id:'PHARMA',  name:'Pharmacode',  cat:'ind',  region:'Europe / Global', std:'LAETUS (Heidelberger)',
+    desc:'Binary barcode used in pharmaceutical packaging. Extremely compact and reliable at very high print speeds.',
+    uses:'Drug packaging (Europe), pharmaceutical production tracking', fmt:'pharm', note:'Integer: 3 to 131,070',
+    engine:'jsb', jbFmt:'pharmacode', dw:200, dh:100, hasEC:false },
+
+  // 2D / Matrix
+  { id:'PDF417',  name:'PDF417',      cat:'2d',   catLabel:'2D / Matrix', region:'Global', std:'ISO/IEC 15438',
+    desc:'Stacked linear 2D barcode capable of encoding large amounts of data. Required format for US/EU driver\'s licenses and airline boarding passes.',
+    uses:'Driver\'s licenses, boarding passes, ID cards, postage, parcel shipping', fmt:'full', note:'Any text — up to ~2700 characters',
+    engine:'pdf417', dw:270, dh:75, hasEC:true,
+    ecLabel:'Error Correction Level', ecOpts:[{v:'0',l:'Level 0 – Minimal'},{v:'1',l:'Level 1'},{v:'2',l:'Level 2 – Recommended'},{v:'3',l:'Level 3'},{v:'4',l:'Level 4'},{v:'5',l:'Level 5 – Maximum'}], ecDefault:'2' },
+
+  { id:'QRCODE',  name:'QR Code',     cat:'2d',   region:'Global',       std:'ISO/IEC 18004',
+    desc:'Quick Response Code. The universal 2D barcode readable by all smartphones. Stores URLs, text, contact info, payments, and more.',
+    uses:'URLs, mobile payments, contact info, marketing, product tracking', fmt:'full', note:'Any text, URL, email, phone',
+    engine:'qrcode', dw:200, dh:200, hasEC:true,
+    ecLabel:'Error Correction Level', ecOpts:[{v:'L',l:'L – Low 7%'},{v:'M',l:'M – Medium 15% (Recommended)'},{v:'Q',l:'Q – Quartile 25%'},{v:'H',l:'H – High 30%'}], ecDefault:'M' },
+];
+
+/* =====================================================================
+   PDF417 ENCODER (ISO/IEC 15438)
+   ===================================================================== */
+const GF_PRIME = 929;
+function getECCoeffs(level) {
+  const C = [
+    [27,917],
+    [522,568,723,809],
+    [237,308,436,284,646,653,428,379],
+    [274,562,232,755,599,524,801,132,295,116,442,428,295,42,176,65],
+    [627,768,38,62,858,720,829,792,749,802,818,492,349,818,633,581,1,572,573,456,759,503,734,330,817,156,274,97,477,419,274,778,786,514,84,221,403,480,529,349,1],
+    [1,522,171,623,239,355,440,516,659,454,312,714,583,256,512,374,825,820,683,527,855,791,802,481,475,757,537,786,740,357,649,584,323,617,218,426,396,649,612,396,490,648,526,712,630,546,605,712,735,583,458,609,509,483,466,540,531,416,392,377,556,422,500,398,382]
+  ];
+  return C[Math.min(level, 5)];
+}
+const EC_COUNT = [2,4,8,16,32,64];
+
+const PDF417 = (function() {
+  /* ---- Byte compaction ---- */
+  function byteCompact(bytes) {
+    const cw = [];
+    for (let i = 0; i < bytes.length; ) {
+      const group = bytes.slice(i, i + 6);
+      if (group.length === 6) {
+        let val = BigInt(0);
+        for (const b of group) val = val * 256n + BigInt(b);
+        const g = [];
+        for (let j = 0; j < 5; j++) {
+          g.unshift(Number(val % 929n));
+          val /= 929n;
+        }
+        cw.push(...g);
+        i += 6;
+      } else {
+        for (const b of group) cw.push(b);
+        i += group.length;
+      }
+    }
+    return cw;
+  }
+
+  /* ---- Numeric compaction ---- */
+  function numericCompact(str) {
+    const cw = [];
+    for (let i = 0; i < str.length; i += 44) {
+      const chunk = '1' + str.slice(i, i + 44);
+      let val = BigInt(chunk);
+      const group = [];
+      while (val > 0n) {
+        group.unshift(Number(val % 900n));
+        val /= 900n;
+      }
+      cw.push(...group);
+    }
+    return cw;
+  }
+
+  /* ---- Encode data into codewords ---- */
+  function encodeData(text) {
+    if (/^\d+$/.test(text)) {
+      return [902, ...numericCompact(text)];
+    }
+    const bytes = Array.from(new TextEncoder().encode(text));
+    return [901, ...byteCompact(bytes)];
+  }
+
+  function computeEC(codewords, level) {
+    const co=getECCoeffs(level); const n=co.length;
+    const ec=new Array(n).fill(0);
+    for(const cw of codewords){
+      const t=(cw+ec[0])%GF_PRIME;
+      for(let i=0;i<n-1;i++) ec[i]=(ec[i+1]+(GF_PRIME-(t*co[n-1-i])%GF_PRIME))%GF_PRIME;
+      ec[n-1]=(GF_PRIME-(t*co[0])%GF_PRIME)%GF_PRIME;
+    }
+    return ec.map(v=>(GF_PRIME-v)%GF_PRIME);
+  }
+
+  const BARWIDTHS=(function(){
+    const all=[];
+    function gen(d,r,s){if(d===0){if(r===0)all.push([...s]);return;}
+      for(let w=1;w<=Math.min(r-(d-1),6);w++){s.push(w);gen(d-1,r-w,s);s.pop();}}
+    gen(8,17,[]);
+    const cl=[[],[],[]];
+    for(const s of all){const c=((s[0]-1)+(s[2]-1)+(s[4]-1)+(s[6]-1))%3;if(cl[c].length<929)cl[c].push(s);}
+    return cl;
+  })();
+
+  function rowIndicator(row,numRows,numCols,ecLevel,cluster){
+    const k=Math.floor(row/3);
+    if(cluster===0)return(k%30)*30+(numRows-1);
+    if(cluster===1)return(k%30)*30+ecLevel*3+Math.floor((numRows-1)/30);
+    return(k%30)*30+(numCols-1);
+  }
+
+  function encode(text, ecLevel, canvasW, canvasH){
+    ecLevel=Math.max(0,Math.min(5,ecLevel));
+    const dataCW=encodeData(text);
+    const ecCount=EC_COUNT[ecLevel];
+    const total=1+dataCW.length+ecCount;
+    let bestRows=3,bestCols=1,bestRatio=Infinity;
+    for(let cols=1;cols<=30;cols++){
+      for(let rows=3;rows<=90;rows+=3){
+        if(rows*cols>=total){
+          const r=Math.abs((cols*17+69)/(rows*3)-canvasW/canvasH);
+          if(r<bestRatio){bestRatio=r;bestRows=rows;bestCols=cols;}
+          break;
+        }
+      }
+    }
+    const numRows=bestRows,numCols=bestCols,cap=numRows*numCols;
+    const pad=cap-total;
+    const fd=[0,...dataCW,...new Array(pad).fill(900)];
+    fd[0]=cap+1+ecCount;
+    const ecCW=computeEC(fd,ecLevel);
+    const allCW=[...fd,...ecCW];
+    const rows=[];
+    for(let r=0;r<numRows;r++){
+      const cl=r%3;
+      rows.push({cluster:cl,codewords:[rowIndicator(r,numRows,numCols,ecLevel,cl),...allCW.slice(r*numCols,(r+1)*numCols),rowIndicator(r,numRows,numCols,ecLevel,cl)]});
+    }
+    const SW=[8,1,1,1,1,1,1,3],SP=[7,1,1,3,1,1,1,2,1];
+    const mRows=rows.map(({cluster,codewords})=>{
+      const m=[...SW];
+      for(const cw of codewords)m.push(...(BARWIDTHS[cluster][cw%929]||[2,1,2,2,2,2,1,5]));
+      m.push(...SP); return m;
+    });
+    const totalMods=mRows[0].reduce((a,b)=>a+b,0);
+    const quietW = 4;
+    const quietH = 4;
+    const rowHeight = 3;
+    const totalW = totalMods + quietW * 2;
+    const totalH = numRows * rowHeight + quietH * 2;
+    let rects='';
+    for(let ri=0;ri<mRows.length;ri++){
+      let x=quietW; const y=quietH+ri*rowHeight; let bar=true;
+      for(const w of mRows[ri]){
+        if(bar)rects+=`<rect x="${x}" y="${y}" width="${w}" height="${rowHeight}"/>`;
+        x+=w; bar=!bar;
+      }
+    }
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${canvasW}" height="${canvasH}" viewBox="0 0 ${totalW} ${totalH}" shape-rendering="crispEdges"><rect width="${totalW}" height="${totalH}" fill="white"/><g fill="black">${rects}</g></svg>`;
+    return { svg, numRows, numCols, totalModules: totalMods, dataCW };
+  }
+  return {encode};
+})();
+
+/* =====================================================================
+   QR CODE SVG GENERATOR
+   ===================================================================== */
+function generateQRSVG(text, ecLevel, targetW, targetH) {
+  const qr = qrcode(0, ecLevel);
+  qr.addData(text, 'Byte');
+  qr.make();
+  const mc = qr.getModuleCount();
+  const margin = 4;
+  const total = mc + 2 * margin;
+  const ms = Math.min(targetW, targetH) / total;
+  let rects = '';
+  for (let r = 0; r < mc; r++) {
+    for (let c = 0; c < mc; c++) {
+      if (qr.isDark(r, c)) {
+        const x = (c + margin) * ms, y = (r + margin) * ms;
+        rects += `<rect x="${x.toFixed(2)}" y="${y.toFixed(2)}" width="${ms.toFixed(2)}" height="${ms.toFixed(2)}"/>`;
+      }
+    }
+  }
+  const sz = Math.min(targetW, targetH);
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}" shape-rendering="crispEdges"><rect width="${sz}" height="${sz}" fill="white"/><g fill="black">${rects}</g></svg>`;
+}
+
+/* =====================================================================
+   JSBARCODE SVG GENERATOR
+   ===================================================================== */
+function generateJSBSVG(type, value, targetW, targetH) {
+  const svgEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svgEl.style.cssText = 'position:fixed;visibility:hidden;top:0;left:0;';
+  document.body.appendChild(svgEl);
+  try {
+    let valid = true;
+    JsBarcode(svgEl, value, {
+      format: type.jbFmt,
+      displayValue: false,
+      margin: type.cat === 'gs1' ? 10 : 6,
+      background: '#ffffff',
+      lineColor: '#000000',
+      valid: v => { valid = v; }
+    });
+    if (!valid) throw new Error(`Invalid data for ${type.name}. Check format requirements.`);
+    const nW = parseFloat(svgEl.getAttribute('width')) || 200;
+    const nH = parseFloat(svgEl.getAttribute('height')) || 80;
+    svgEl.setAttribute('viewBox', `0 0 ${nW} ${nH}`);
+    svgEl.setAttribute('width', targetW);
+    svgEl.setAttribute('height', targetH);
+    svgEl.setAttribute('preserveAspectRatio', 'none');
+    return new XMLSerializer().serializeToString(svgEl);
+  } finally {
+    document.body.removeChild(svgEl);
+  }
+}
+
+/* =====================================================================
+   DATA ENCODING PER TYPE
+   ===================================================================== */
+function padDigits(str, len) {
+  const d = (str || '').replace(/\D/g, '');
+  if (!d) return '0'.repeat(len);
+  return d.length >= len ? d.slice(0, len) : d.padStart(len, '0');
+}
+
+function buildPayload(fields) {
+  const parts = [];
+  if (fields.name)   parts.push('N:' + fields.name);
+  if (fields.serial) parts.push('SN:' + fields.serial);
+  if (fields.idnum)  parts.push('ID:' + fields.idnum);
+  if (fields.dob)    parts.push('DOB:' + fields.dob);
+  return parts.join('|') || 'BARCODE';
+}
+
+function getEncodedData(type, fields) {
+  const payload  = buildPayload(fields);
+  const idRaw    = fields.idnum || fields.serial || '1234567890';
+  const digits   = idRaw.replace(/\D/g, '') || '1234567890';
+
+  switch (type.fmt) {
+    case 'full': return { value: payload, note: null };
+    case 'n12':  { const d=padDigits(digits,12); return {value:d, note:`EAN-13 needs 12 digits → using: ${d}`}; }
+    case 'n7':   { const d=padDigits(digits,7);  return {value:d, note:`EAN-8 needs 7 digits → using: ${d}`}; }
+    case 'n11':  { const d=padDigits(digits,11); return {value:d, note:`UPC-A needs 11 digits → using: ${d}`}; }
+    case 'n6':   { const d=padDigits(digits,6);  return {value:d, note:`UPC-E needs 6 digits → using: ${d}`}; }
+    case 'n13':  { const d=padDigits(digits,13); return {value:d, note:`ITF-14 needs 13 digits → using: ${d}`}; }
+    case 'c39':  {
+      const clean=payload.toUpperCase().replace(/[|:]/g,' ').replace(/[^A-Z0-9\-\.\s\$\/\+\%]/g,'').replace(/\s+/g,' ').trim().slice(0,43);
+      return {value:clean, note:`Code 39: uppercase, limited charset${clean.length<payload.length?' (truncated)':''}`};
+    }
+    case 'cbar': { const d=padDigits(digits,12); return {value:`A${d}B`, note:`Codabar: A${d}B (start/stop chars added)`}; }
+    case 'msi':  { const d=padDigits(digits,10); return {value:d, note:`MSI Plessey uses digits only → ${d}`}; }
+    case 'pharm':{ const n=Math.min(131070,Math.max(3,parseInt(digits.slice(0,6),10)||3)); return {value:n.toString(),note:`Pharmacode value: ${n} (range: 3–131,070)`}; }
+    default:     return {value:payload, note:null};
+  }
+}
+
+/* =====================================================================
+   UI RENDERING
+   ===================================================================== */
+let selectedType = null;
+let currentSVG = '';
+
+// Render type selector
+(function renderTypeSelector() {
+  const container = document.getElementById('typeSelector');
+  const catIcons = {
+    'gs1': '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>',
+    'ind': '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
+    '2d':  '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>'
+  };
+  let html = '';
+  let lastCat = null;
+  for (const t of TYPES) {
+    if (t.cat !== lastCat) {
+      if (html) html += '</div>';
+      html += `<div class="cat-label">${catIcons[t.cat] || ''}${t.catLabel || ''}</div><div class="type-pills">`;
+      lastCat = t.cat;
+    }
+    html += `<button type="button" class="type-pill" data-id="${t.id}" id="pill-${t.id}">${t.name}</button>`;
+  }
+  html += '</div>';
+  container.innerHTML = html;
+
+  container.addEventListener('click', e => {
+    const btn = e.target.closest('.type-pill');
+    if (!btn) return;
+    document.querySelectorAll('.type-pill').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    const type = TYPES.find(t => t.id === btn.dataset.id);
+    selectType(type);
+  });
+})();
+
+function selectType(type) {
+  selectedType = type;
+
+  // Update canvas defaults
+  document.getElementById('canvasW').value = type.dw;
+  document.getElementById('canvasH').value = type.dh;
+
+  // Show/hide EC level
+  const ecRow = document.getElementById('ecRow');
+  const ecSel = document.getElementById('ecLevel');
+  if (type.hasEC) {
+    ecRow.classList.add('visible');
+    ecSel.innerHTML = type.ecOpts.map(o => `<option value="${o.v}"${o.v==type.ecDefault?' selected':''}>${o.l}</option>`).join('');
+  } else {
+    ecRow.classList.remove('visible');
+  }
+
+  // Handle Input mode switching (1D vs 2D tabs)
+  const modeTabs = document.getElementById('modeTabs');
+  const tipBanner = document.getElementById('tipBanner');
+  const tipText = document.getElementById('tipBannerText');
+  const cardTitle = document.getElementById('formCardTitle');
+
+  // Hide all panels first
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+
+  if (type.engine === 'pdf417' || type.engine === 'qrcode') {
+    modeTabs.style.display = 'flex';
+    cardTitle.textContent = 'Identity / Text Input';
+    document.getElementById('panel-' + currentMode).classList.add('active');
+    tipBanner.style.display = 'flex';
+    tipText.innerHTML = `<strong>Pro Tip:</strong> Keep inputs brief and use a larger canvas (e.g. 270px width) to make the barcode clean, sharp, and easy to scan.`;
+  } else {
+    modeTabs.style.display = 'none';
+    cardTitle.textContent = `${type.name} Data Input`;
+    document.getElementById('panel-1d').classList.add('active');
+
+    // Customize 1D input label & placeholder
+    const label = document.getElementById('lblRawData');
+    const input = document.getElementById('fRawData');
+    label.textContent = `${type.name} Code Value`;
+    
+    if (type.fmt.startsWith('n')) {
+      input.placeholder = `Enter digits only (e.g. ${type.fmt === 'n12' ? '12 digits' : type.fmt === 'n7' ? '7 digits' : 'digits'})`;
+      tipBanner.style.display = 'flex';
+      tipText.innerHTML = `<strong>Note:</strong> ${type.name} accepts <strong>numbers only</strong>. Any non-numeric characters will be removed automatically.`;
+    } else {
+      input.placeholder = `Enter barcode text (e.g. ${type.fmt === 'c39' ? 'A-Z, 0-9, space, - . $ / + %' : 'any text'})`;
+      tipBanner.style.display = 'flex';
+      tipText.innerHTML = `<strong>Note:</strong> ${type.name} is a standard 1D barcode. ${type.note || ''}`;
+    }
+  }
+
+  // Show type info box
+  const box = document.getElementById('typeInfoBox');
+  box.style.display = 'block';
+  box.className = 'type-info-box';
+  box.innerHTML = `
+    <div class="tib-header">
+      <span class="tib-name">${type.name}</span>
+      <span class="tib-badge">${type.region}</span>
+      <span class="tib-std">${type.std}</span>
+    </div>
+    <div class="tib-desc">${type.desc}</div>
+    <div class="tib-grid">
+      <div class="tib-item">
+        <div class="tib-lbl">Common Uses</div>
+        <div class="tib-val">${type.uses}</div>
+      </div>
+      <div class="tib-item">
+        <div class="tib-lbl">Data Format</div>
+        <div class="tib-val">${type.note}</div>
+      </div>
+      <div class="tib-item">
+        <div class="tib-lbl">Default Canvas</div>
+        <div class="tib-val">${type.dw}×${type.dh} px</div>
+      </div>
+      <div class="tib-item">
+        <div class="tib-lbl">Encoding Engine</div>
+        <div class="tib-val">${type.engine === 'jsb' ? 'JsBarcode' : type.engine === 'pdf417' ? 'PDF417 (ISO 15438)' : 'QR Generator'}</div>
+      </div>
+    </div>`;
+}
+
+// Select first type by default
+selectType(TYPES[0]);
+document.getElementById('pill-' + TYPES[0].id).classList.add('active');
+
+/* =====================================================================
+   FORM SUBMIT
+   ===================================================================== */
+/* =====================================================================
+   FORM SUBMIT
+   ===================================================================== */
+let currentMode = 'identity';
+document.getElementById('modeTabs').addEventListener('click', e => {
+  const btn = e.target.closest('.mode-tab');
+  if (!btn) return;
+  document.querySelectorAll('.mode-tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  currentMode = btn.dataset.mode;
+  document.getElementById('panel-' + currentMode).classList.add('active');
+});
+
+function buildPayload() {
+  if (selectedType.engine === 'jsb') {
+    return document.getElementById('fRawData').value.trim();
+  }
+  // For 2D barcodes, read based on tab
+  if (currentMode === 'identity') {
+    const name   = document.getElementById('fname').value.trim();
+    const serial = document.getElementById('fserial').value.trim();
+    const idnum  = document.getElementById('fidnum').value.trim();
+    const dob    = document.getElementById('fdob').value;
+    if (!name && !serial && !idnum && !dob) return '';
+    const parts = [];
+    if (name)   parts.push('N:' + name);
+    if (serial) parts.push('SN:' + serial);
+    if (idnum)  parts.push('ID:' + idnum);
+    if (dob)    parts.push('DOB:' + dob);
+    return parts.join('|');
+  } else if (currentMode === 'text') {
+    return document.getElementById('fpText').value.trim();
+  } else if (currentMode === 'url') {
+    return document.getElementById('fpUrl').value.trim();
+  }
+  return '';
+}
+
+function getEncodedData(type) {
+  const payload = buildPayload() || 'BARCODE';
+  const digits = payload.replace(/\D/g, '') || '1234567890';
+
+  switch (type.fmt) {
+    case 'full': return { value: payload, note: null };
+    case 'n12':  { const d=padDigits(digits,12); return {value:d, note:`EAN-13 needs 12 digits → using: ${d}`}; }
+    case 'n7':   { const d=padDigits(digits,7);  return {value:d, note:`EAN-8 needs 7 digits → using: ${d}`}; }
+    case 'n11':  { const d=padDigits(digits,11); return {value:d, note:`UPC-A needs 11 digits → using: ${d}`}; }
+    case 'n6':   { const d=padDigits(digits,6);  return {value:d, note:`UPC-E needs 6 digits → using: ${d}`}; }
+    case 'n13':  { const d=padDigits(digits,13); return {value:d, note:`ITF-14 needs 13 digits → using: ${d}`}; }
+    case 'c39':  {
+      const clean=payload.toUpperCase().replace(/[|:]/g,' ').replace(/[^A-Z0-9\-\.\s\$\/\+\%]/g,'').replace(/\s+/g,' ').trim().slice(0,43);
+      return {value:clean, note:`Code 39: uppercase, limited charset${clean.length<payload.length?' (truncated)':''}`};
+    }
+    case 'cbar': { const d=padDigits(digits,12); return {value:`A${d}B`, note:`Codabar: A${d}B (start/stop chars added)`}; }
+    case 'msi':  { const d=padDigits(digits,10); return {value:d, note:`MSI Plessey uses digits only → ${d}`}; }
+    case 'pharm':{ const n=Math.min(131070,Math.max(3,parseInt(digits.slice(0,6),10)||3)); return {value:n.toString(),note:`Pharmacode value: ${n} (range: 3–131,070)`}; }
+    default:     return {value:payload, note:null};
+  }
+}
+
+document.getElementById('barcodeForm').addEventListener('submit', e => {
+  e.preventDefault();
+  if (!selectedType) { showToast('⚠️ Please select a barcode type first.'); return; }
+
+  const payload = buildPayload();
+  if (!payload) {
+    showToast('⚠️ Please fill in required fields.'); return;
+  }
+
+  const canvasW = parseInt(document.getElementById('canvasW').value) || selectedType.dw;
+  const canvasH = parseInt(document.getElementById('canvasH').value) || selectedType.dh;
+  const ecLevel = document.getElementById('ecLevel').value;
+
+  const btn = document.getElementById('generateBtn');
+  btn.textContent = 'Generating…'; btn.disabled = true;
+
+  setTimeout(() => {
+    try {
+      const { value, note } = getEncodedData(selectedType);
+
+      // Show data note
+      const noteEl = document.getElementById('dataNote');
+      if (note) {
+        noteEl.style.display = 'block';
+        noteEl.className = 'data-note full';
+        noteEl.innerHTML = `⚠️ ${note}`;
+      } else {
+        noteEl.style.display = 'none';
+      }
+
+      // Generate SVG
+      let svg;
+      if (selectedType.engine === 'jsb') {
+        svg = generateJSBSVG(selectedType, value, canvasW, canvasH);
+      } else if (selectedType.engine === 'pdf417') {
+        const result = PDF417.encode(value, parseInt(ecLevel)||2, canvasW, canvasH);
+        svg = result.svg;
+      } else {
+        svg = generateQRSVG(value, ecLevel||'M', canvasW, canvasH);
+      }
+
+      currentSVG = svg;
+
+      // Show preview
+      document.getElementById('barcodeStage').innerHTML = svg;
+      document.getElementById('canvasLabel').textContent =
+        `${selectedType.name} · Canvas: ${canvasW}×${canvasH}px`;
+      document.getElementById('encodedData').innerHTML =
+        `<strong>Type:</strong> ${selectedType.name} (${selectedType.std})<br>` +
+        `<strong>Encoded:</strong> ${value.replace(/\|/g,' | ')}`;
+
+      document.getElementById('emptyState').style.display = 'none';
+      document.getElementById('previewWrap').classList.add('visible');
+      showToast('✓ Barcode generated!');
+
+    } catch (err) {
+      showToast('Error: ' + err.message);
+      console.error(err);
+    }
+    btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg> Generate Barcode`;
+    btn.disabled = false;
+  }, 60);
+});
+
+/* =====================================================================
+   DOWNLOAD / COPY
+   ===================================================================== */
+document.getElementById('downloadBtn').addEventListener('click', () => {
+  if (!currentSVG) return;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([currentSVG], {type:'image/svg+xml'}));
+  a.download = `${selectedType?.id || 'barcode'}_${Date.now()}.svg`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  showToast('✓ SVG downloaded!');
+});
+
+document.getElementById('copyBtn').addEventListener('click', async () => {
+  if (!currentSVG) return;
+  try { await navigator.clipboard.writeText(currentSVG); showToast('✓ SVG copied!'); }
+  catch { showToast('Could not copy automatically.'); }
+});
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2600);
+}
+</script>
+</body>
+</html>

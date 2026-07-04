@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QR Code Generator – SVG & PNG Export</title>
+  <meta name="description" content="Generate QR codes from identity fields, URLs, WiFi credentials, vCard contacts, and free text. Download as SVG or PNG with full color customization." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+    :root {
+      --bg:#090c18; --card:#141b2e; --border:rgba(56,189,248,.18);
+      --accent:#38bdf8; --accent2:#818cf8; --success:#34d399; --warn:#f59e0b;
+      --text:#e2e8f0; --muted:#64748b; --input-bg:#0c1220; --glow:rgba(56,189,248,.22);
+    }
+    html { scroll-behavior:smooth; }
+    body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; overflow-x:hidden; }
+    body::before {
+      content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+      background:
+        radial-gradient(ellipse 70% 55% at 50% -15%,rgba(56,189,248,.15) 0%,transparent 70%),
+        radial-gradient(ellipse 50% 40% at 85% 80%,rgba(129,140,248,.08) 0%,transparent 60%),
+        linear-gradient(rgba(56,189,248,.03) 1px,transparent 1px),
+        linear-gradient(90deg,rgba(56,189,248,.03) 1px,transparent 1px);
+      background-size:auto,auto,36px 36px,36px 36px;
+    }
+    .container { position:relative; z-index:1; max-width:720px; margin:0 auto; padding:44px 20px 80px; }
+
+    /* ── Header ── */
+    header { text-align:center; margin-bottom:44px; }
+    .logo-badge {
+      display:inline-flex; align-items:center; gap:8px;
+      background:linear-gradient(135deg,rgba(56,189,248,.15),rgba(129,140,248,.1));
+      border:1px solid rgba(56,189,248,.3); border-radius:100px;
+      padding:6px 16px; font-size:12px; font-weight:600; letter-spacing:.08em;
+      text-transform:uppercase; color:var(--accent); margin-bottom:22px;
+    }
+    header h1 {
+      font-size:clamp(1.9rem,5vw,2.7rem); font-weight:700; line-height:1.15;
+      background:linear-gradient(135deg,#fff 30%,var(--accent));
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+      margin-bottom:12px;
+    }
+    header p { color:var(--muted); font-size:15px; line-height:1.65; max-width:520px; margin:auto; }
+
+    /* ── Card ── */
+    .card {
+      background:var(--card); border:1px solid var(--border); border-radius:20px;
+      padding:28px 26px; margin-bottom:20px;
+      box-shadow:0 8px 40px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.04);
+    }
+    .card-title {
+      font-size:12px; font-weight:600; letter-spacing:.08em; text-transform:uppercase;
+      color:var(--accent); margin-bottom:18px; display:flex; align-items:center; gap:8px;
+    }
+    .card-title::after { content:''; flex:1; height:1px; background:linear-gradient(90deg,var(--border),transparent); }
+
+    /* ── Mode tabs ── */
+    .mode-tabs { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:22px; }
+    .mode-tab {
+      display:flex; align-items:center; gap:6px;
+      padding:8px 14px; background:rgba(56,189,248,.07); border:1px solid var(--border);
+      border-radius:8px; color:var(--muted); font-size:13px; font-weight:500;
+      cursor:pointer; transition:all .2s; user-select:none;
+    }
+
+    /* ── Navigation ── */
+    .app-nav { position:sticky; top:0; z-index:100; background:rgba(9,12,24,.92); backdrop-filter:blur(20px) saturate(180%); border-bottom:1px solid rgba(56,189,248,.1); }
+    .nav-inner { max-width:760px; margin:0 auto; display:flex; align-items:center; padding:0 20px; height:52px; }
+    .nav-brand { display:flex; align-items:center; gap:8px; font-size:13px; font-weight:700; color:var(--text); margin-right:auto; letter-spacing:-.01em; }
+    .nav-links { display:flex; gap:3px; }
+    .nav-link { display:flex; align-items:center; gap:6px; padding:6px 11px; border-radius:8px; font-size:12.5px; font-weight:500; color:var(--muted); text-decoration:none; transition:all .2s; white-space:nowrap; }
+    .nav-link:hover { background:rgba(56,189,248,.1); color:var(--text); }
+    .nav-link.active { background:rgba(56,189,248,.15); color:var(--accent); }
+    @media(max-width:460px) { .nav-brand .brand-label{display:none;} .nav-link .link-label{display:none;} }
+    .mode-tab:hover { background:rgba(56,189,248,.14); color:var(--text); }
+    .mode-tab.active { background:rgba(56,189,248,.18); border-color:var(--accent); color:var(--accent); }
+
+    /* ── Panels ── */
+    .panel { display:none; }
+    .panel.active { display:block; }
+
+    /* ── Form ── */
+    .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    .form-grid .full { grid-column:1/-1; }
+    .field { display:flex; flex-direction:column; gap:6px; }
+    label { font-size:11px; font-weight:500; color:var(--muted); letter-spacing:.04em; text-transform:uppercase; }
+    input[type="text"], input[type="url"], input[type="email"], input[type="tel"],
+    input[type="date"], input[type="number"], input[type="password"], textarea, select {
+      background:var(--input-bg); border:1px solid var(--border); border-radius:10px;
+      padding:11px 13px; color:var(--text); font-family:inherit; font-size:14px;
+      outline:none; transition:border-color .2s,box-shadow .2s; width:100%;
+    }
+    input:focus,textarea:focus,select:focus { border-color:var(--accent); box-shadow:0 0 0 3px var(--glow); }
+    input::placeholder,textarea::placeholder { color:var(--muted); }
+    textarea { resize:vertical; min-height:90px; line-height:1.5; }
+    input[type="date"]::-webkit-calendar-picker-indicator { filter:invert(.5); }
+
+    /* ── Color inputs ── */
+    .color-row { display:flex; gap:12px; }
+    .color-field { display:flex; flex-direction:column; gap:6px; flex:1; }
+    input[type="color"] {
+      padding:3px; height:42px; border-radius:8px; cursor:pointer; background:var(--input-bg);
+      border:1px solid var(--border);
+    }
+
+    /* ── Options grid ── */
+    .opt-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
+    @media(max-width:500px) { .opt-grid{grid-template-columns:1fr 1fr;} }
+
+    /* ── Divider ── */
+    .divider { height:1px; background:var(--border); margin:20px 0; }
+
+    /* ── Buttons ── */
+    .btn {
+      display:inline-flex; align-items:center; justify-content:center; gap:8px;
+      border:none; border-radius:12px; cursor:pointer; font-family:inherit;
+      font-weight:600; transition:transform .15s,box-shadow .15s; padding:13px 24px; font-size:14px;
+    }
+    .btn:active { transform:scale(.97); }
+    .btn-primary {
+      background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff;
+      box-shadow:0 4px 20px rgba(56,189,248,.3); width:100%; font-size:15px; padding:15px; margin-top:20px;
+    }
+    .btn-primary:hover { box-shadow:0 6px 30px rgba(56,189,248,.5); transform:translateY(-1px); }
+    .btn-svg {
+      background:linear-gradient(135deg,#0d7a4e,var(--success)); color:#fff;
+      box-shadow:0 4px 16px rgba(52,211,153,.3); flex:1; font-size:13px; padding:11px 16px;
+    }
+    .btn-svg:hover { box-shadow:0 6px 24px rgba(52,211,153,.5); transform:translateY(-1px); }
+    .btn-png {
+      background:linear-gradient(135deg,#1d4ed8,#6366f1); color:#fff;
+      box-shadow:0 4px 16px rgba(99,102,241,.3); flex:1; font-size:13px; padding:11px 16px;
+    }
+    .btn-png:hover { box-shadow:0 6px 24px rgba(99,102,241,.5); transform:translateY(-1px); }
+    .btn-copy {
+      background:rgba(56,189,248,.1); border:1px solid rgba(56,189,248,.25);
+      color:var(--accent); flex:1; font-size:13px; padding:11px 16px;
+    }
+    .btn-copy:hover { background:rgba(56,189,248,.2); }
+
+    /* ── Preview ── */
+    .preview-wrap { display:none; flex-direction:column; gap:16px; align-items:center; }
+    .preview-wrap.visible { display:flex; }
+    .qr-stage {
+      background:#fff; border-radius:16px; padding:24px;
+      display:flex; align-items:center; justify-content:center;
+      box-shadow:0 0 40px rgba(56,189,248,.12);
+    }
+    .qr-stage svg, .qr-stage img { display:block; border-radius:4px; }
+    .qr-meta { font-size:11px; color:var(--muted); font-family:'JetBrains Mono',monospace; text-align:center; }
+    .encoded-box {
+      width:100%; background:var(--input-bg); border:1px solid var(--border);
+      border-radius:9px; padding:10px 13px; font-family:'JetBrains Mono',monospace;
+      font-size:11px; color:var(--muted); line-height:1.6; word-break:break-all;
+    }
+    .action-row { display:flex; gap:10px; flex-wrap:wrap; width:100%; }
+    .empty-state { text-align:center; padding:30px 0; }
+    .empty-state p { color:var(--muted); font-size:14px; }
+    .empty-state p+p { font-size:12px; margin-top:4px; }
+
+    /* QR size indicator rings */
+    .qr-ring {
+      width:200px; height:200px; border-radius:12px;
+      background:rgba(56,189,248,.04); border:2px dashed rgba(56,189,248,.2);
+      display:flex; align-items:center; justify-content:center;
+      color:var(--muted); font-size:13px; flex-direction:column; gap:8px;
+    }
+
+    /* EC level pills */
+    .ec-pills { display:flex; gap:8px; flex-wrap:wrap; }
+    .ec-pill {
+      padding:8px 16px; background:rgba(56,189,248,.07); border:1px solid var(--border);
+      border-radius:8px; color:var(--muted); font-size:12px; font-weight:600;
+      cursor:pointer; transition:all .2s;
+    }
+    .ec-pill:hover { background:rgba(56,189,248,.14); color:var(--text); }
+    .ec-pill.active { background:rgba(56,189,248,.18); border-color:var(--accent); color:var(--accent); }
+    .ec-pill .pct { font-size:10px; font-weight:400; opacity:.7; display:block; }
+
+    /* ── Wifi security ── */
+    .seg-row { display:flex; gap:6px; }
+    .seg-btn { padding:8px 14px; background:rgba(56,189,248,.07); border:1px solid var(--border); border-radius:8px; color:var(--muted); font-size:12px; font-weight:500; cursor:pointer; transition:all .2s; }
+    .seg-btn.active { background:rgba(56,189,248,.18); border-color:var(--accent); color:var(--accent); }
+
+    /* ── Toast ── */
+    .toast {
+      position:fixed; bottom:28px; left:50%; transform:translateX(-50%) translateY(16px);
+      background:var(--success); color:#000; padding:9px 22px; border-radius:100px;
+      font-size:13px; font-weight:600; opacity:0; pointer-events:none;
+      transition:opacity .3s,transform .3s; z-index:9999;
+    }
+    .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+    ::-webkit-scrollbar { width:6px; }
+    ::-webkit-scrollbar-track { background:var(--bg); }
+    ::-webkit-scrollbar-thumb { background:var(--border); border-radius:99px; }
+
+    @media(max-width:520px) {
+      .form-grid { grid-template-columns:1fr; }
+      .form-grid .full { grid-column:1; }
+      .card { padding:18px 14px; }
+      .mode-tabs { gap:5px; }
+      .mode-tab { font-size:12px; padding:7px 11px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="app-nav">
+  <div class="nav-inner">
+    <div class="nav-brand">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="4" width="3" height="16" rx="0.5" opacity=".9"/><rect x="7" y="4" width="1.5" height="16" rx="0.5"/><rect x="10.5" y="4" width="3" height="16" rx="0.5" opacity=".85"/><rect x="15.5" y="4" width="1.5" height="16" rx="0.5"/><rect x="19" y="4" width="3" height="16" rx="0.5" opacity=".9"/></svg>
+      <span class="brand-label">Barcode Suite</span>
+    </div>
+    <div class="nav-links">
+      <a href="index.html" class="nav-link">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="2" y="4" width="2.5" height="16" rx="0.4"/><rect x="6" y="4" width="1" height="16" rx="0.4"/><rect x="8.5" y="4" width="2.5" height="16" rx="0.4"/><rect x="12.5" y="4" width="1" height="16" rx="0.4"/><rect x="15" y="4" width="2" height="16" rx="0.4"/><rect x="18.5" y="4" width="1" height="16" rx="0.4"/><rect x="21" y="4" width="1" height="16" rx="0.4"/></svg>
+        <span class="link-label">PDF417</span>
+      </a>
+      <a href="universal-barcode.html" class="nav-link">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><rect x="3" y="10" width="18" height="4" rx="1"/><rect x="3" y="16" width="18" height="4" rx="1"/></svg>
+        <span class="link-label">Universal</span>
+      </a>
+      <a href="qrcode-generator.html" class="nav-link active">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="5.5" y="5.5" width="2" height="2" fill="currentColor" stroke="none"/><rect x="16.5" y="5.5" width="2" height="2" fill="currentColor" stroke="none"/><rect x="5.5" y="16.5" width="2" height="2" fill="currentColor" stroke="none"/><rect x="14" y="14" width="3" height="3" fill="currentColor" stroke="none"/><rect x="18" y="18" width="3" height="3" fill="currentColor" stroke="none"/></svg>
+        <span class="link-label">QR Code</span>
+      </a>
+    </div>
+  </div>
+</nav>
+
+<div class="container">
+  <header>
+    <div class="logo-badge">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="5.5" y="5.5" width="2" height="2" fill="currentColor" stroke="none"/><rect x="16.5" y="5.5" width="2" height="2" fill="currentColor" stroke="none"/><rect x="5.5" y="16.5" width="2" height="2" fill="currentColor" stroke="none"/></svg>
+      QR Code Generator
+    </div>
+    <h1>QR Code Generator</h1>
+    <p>Generate QR codes from identity fields, URLs, WiFi credentials, vCard contacts, and custom text. Export as SVG or PNG with full color control.</p>
+  </header>
+
+  <!-- Mode tabs + Input -->
+  <div class="card">
+    <div class="card-title">Input Mode</div>
+    <div class="mode-tabs" id="modeTabs">
+      <button class="mode-tab active" data-mode="identity">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M16 10h2M16 14h2M8 12a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM8 12v2"/></svg>
+        Identity
+      </button>
+      <button class="mode-tab" data-mode="text">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Free Text
+      </button>
+      <button class="mode-tab" data-mode="url">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        URL
+      </button>
+      <button class="mode-tab" data-mode="wifi">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+        WiFi
+      </button>
+      <button class="mode-tab" data-mode="vcard">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        vCard
+      </button>
+      <button class="mode-tab" data-mode="email">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        Email
+      </button>
+      <button class="mode-tab" data-mode="sms">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        SMS
+      </button>
+    </div>
+
+    <!-- Panel: Identity -->
+    <div class="panel active" id="panel-identity">
+      <div class="form-grid">
+        <div class="field full">
+          <label for="iName">Full Name</label>
+          <input id="iName" type="text" placeholder="e.g. Md. Rahim Uddin" autocomplete="name"/>
+        </div>
+        <div class="field">
+          <label for="iSerial">Serial Number</label>
+          <input id="iSerial" type="text" placeholder="e.g. SN-20240001"/>
+        </div>
+        <div class="field">
+          <label for="iIdnum">Identify Number</label>
+          <input id="iIdnum" type="text" placeholder="e.g. ID-9981234"/>
+        </div>
+        <div class="field">
+          <label for="iDob">Date of Birth</label>
+          <input id="iDob" type="date"/>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel: Free Text -->
+    <div class="panel" id="panel-text">
+      <div class="field">
+        <label for="pText">Text Content</label>
+        <textarea id="pText" placeholder="Enter any text, data, or encoded information..."></textarea>
+      </div>
+    </div>
+
+    <!-- Panel: URL -->
+    <div class="panel" id="panel-url">
+      <div class="field">
+        <label for="pUrl">URL / Link</label>
+        <input id="pUrl" type="url" placeholder="https://example.com"/>
+      </div>
+    </div>
+
+    <!-- Panel: WiFi -->
+    <div class="panel" id="panel-wifi">
+      <div class="form-grid">
+        <div class="field full">
+          <label for="wSSID">Network Name (SSID)</label>
+          <input id="wSSID" type="text" placeholder="e.g. MyHomeNetwork"/>
+        </div>
+        <div class="field full">
+          <label for="wPass">Password</label>
+          <input id="wPass" type="password" placeholder="Wi-Fi password"/>
+        </div>
+        <div class="field full">
+          <label>Security Type</label>
+          <div class="seg-row" id="wifiSec">
+            <button type="button" class="seg-btn active" data-sec="WPA">WPA/WPA2</button>
+            <button type="button" class="seg-btn" data-sec="WEP">WEP</button>
+            <button type="button" class="seg-btn" data-sec="nopass">None</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="wHidden">Hidden Network?</label>
+          <select id="wHidden">
+            <option value="false">No (visible)</option>
+            <option value="true">Yes (hidden)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel: vCard -->
+    <div class="panel" id="panel-vcard">
+      <div class="form-grid">
+        <div class="field">
+          <label for="vcFirst">First Name</label>
+          <input id="vcFirst" type="text" placeholder="John"/>
+        </div>
+        <div class="field">
+          <label for="vcLast">Last Name</label>
+          <input id="vcLast" type="text" placeholder="Doe"/>
+        </div>
+        <div class="field">
+          <label for="vcPhone">Phone</label>
+          <input id="vcPhone" type="tel" placeholder="+880 1700 000000"/>
+        </div>
+        <div class="field">
+          <label for="vcEmail">Email</label>
+          <input id="vcEmail" type="email" placeholder="john@example.com"/>
+        </div>
+        <div class="field full">
+          <label for="vcOrg">Organization / Company</label>
+          <input id="vcOrg" type="text" placeholder="Company Name"/>
+        </div>
+        <div class="field full">
+          <label for="vcAddr">Address</label>
+          <input id="vcAddr" type="text" placeholder="123 Main St, City, Country"/>
+        </div>
+        <div class="field full">
+          <label for="vcUrl">Website</label>
+          <input id="vcUrl" type="url" placeholder="https://example.com"/>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel: Email -->
+    <div class="panel" id="panel-email">
+      <div class="form-grid">
+        <div class="field full">
+          <label for="emTo">To (Email Address)</label>
+          <input id="emTo" type="email" placeholder="recipient@example.com"/>
+        </div>
+        <div class="field full">
+          <label for="emSubject">Subject</label>
+          <input id="emSubject" type="text" placeholder="Email subject..."/>
+        </div>
+        <div class="field full">
+          <label for="emBody">Body</label>
+          <textarea id="emBody" placeholder="Email body text..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel: SMS -->
+    <div class="panel" id="panel-sms">
+      <div class="form-grid">
+        <div class="field full">
+          <label for="smsPhone">Phone Number</label>
+          <input id="smsPhone" type="tel" placeholder="+880 1700 000000"/>
+        </div>
+        <div class="field full">
+          <label for="smsMsg">Message</label>
+          <textarea id="smsMsg" placeholder="SMS message text..."></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- QR Options -->
+  <div class="card">
+    <div class="card-title">QR Code Options</div>
+
+    <div style="margin-bottom:18px;">
+      <label style="font-size:11px;font-weight:500;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;display:block;margin-bottom:10px;">
+        Error Correction Level
+      </label>
+      <div class="ec-pills" id="ecPills">
+        <button class="ec-pill" data-ec="L"><span>L</span><span class="pct">7% recovery</span></button>
+        <button class="ec-pill active" data-ec="M"><span>M</span><span class="pct">15% recovery</span></button>
+        <button class="ec-pill" data-ec="Q"><span>Q</span><span class="pct">25% recovery</span></button>
+        <button class="ec-pill" data-ec="H"><span>H</span><span class="pct">30% recovery</span></button>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="opt-grid" style="margin-bottom:18px;">
+      <div class="field">
+        <label for="optSize">Module Size (px)</label>
+        <select id="optSize">
+          <option value="4">Tiny (4px)</option>
+          <option value="6">Small (6px)</option>
+          <option value="8" selected>Medium (8px)</option>
+          <option value="10">Large (10px)</option>
+          <option value="12">XL (12px)</option>
+          <option value="16">XXL (16px)</option>
+          <option value="custom">Custom…</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="optMargin">Quiet Zone (modules)</label>
+        <select id="optMargin">
+          <option value="0">0 (none)</option>
+          <option value="2">2 modules</option>
+          <option value="4" selected>4 modules (standard)</option>
+          <option value="6">6 modules</option>
+          <option value="8">8 modules</option>
+        </select>
+      </div>
+      <div class="field" id="customSizeField" style="display:none;">
+        <label for="optCustomSize">Custom Size (px)</label>
+        <input id="optCustomSize" type="number" value="8" min="1" max="50"/>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <label style="font-size:11px;font-weight:500;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;display:block;margin-bottom:10px;">Colors</label>
+    <div class="color-row">
+      <div class="color-field">
+        <label for="fgColor">Foreground (Modules)</label>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input type="color" id="fgColor" value="#000000" style="width:50px;flex-shrink:0;"/>
+          <input type="text" id="fgHex" value="#000000" placeholder="#000000" style="font-family:'JetBrains Mono',monospace;font-size:13px;"/>
+        </div>
+      </div>
+      <div class="color-field">
+        <label for="bgColor">Background</label>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input type="color" id="bgColor" value="#ffffff" style="width:50px;flex-shrink:0;"/>
+          <input type="text" id="bgHex" value="#ffffff" placeholder="#ffffff" style="font-family:'JetBrains Mono',monospace;font-size:13px;"/>
+        </div>
+      </div>
+    </div>
+
+    <button type="button" class="btn btn-primary" id="generateBtn">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="5" height="5" rx="1"/><rect x="16" y="3" width="5" height="5" rx="1"/>
+        <rect x="3" y="16" width="5" height="5" rx="1"/>
+        <circle cx="16.5" cy="16.5" r="2.5"/>
+        <line x1="12" y1="3" x2="12" y2="12"/><line x1="3" y1="12" x2="12" y2="12"/>
+      </svg>
+      Generate QR Code
+    </button>
+  </div>
+
+  <!-- Preview -->
+  <div class="card">
+    <div class="card-title">Preview &amp; Export</div>
+
+    <div class="preview-wrap" id="previewWrap">
+      <div class="qr-stage" id="qrStage"></div>
+      <div class="qr-meta" id="qrMeta"></div>
+      <details style="width:100%">
+        <summary style="cursor:pointer;font-size:12px;color:var(--muted);user-select:none;">Show encoded data</summary>
+        <div class="encoded-box" id="encodedData" style="margin-top:8px;"></div>
+      </details>
+      <div class="action-row">
+        <button class="btn btn-svg" id="downloadSvg">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          Download SVG
+        </button>
+        <button class="btn btn-png" id="downloadPng">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            <circle cx="8.5" cy="8.5" r="1.5"/>
+            <polyline points="21 15 16 10 5 21"/>
+          </svg>
+          Download PNG
+        </button>
+        <button class="btn btn-copy" id="copySvg">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+          </svg>
+          Copy SVG
+        </button>
+      </div>
+    </div>
+
+    <div class="empty-state" id="emptyState">
+      <svg width="60" height="60" viewBox="0 0 60 60" fill="none" style="margin:0 auto 14px;display:block;opacity:.25">
+        <rect x="4" y="4" width="16" height="16" rx="2" stroke="#38bdf8" stroke-width="2"/>
+        <rect x="8" y="8" width="8" height="8" fill="#38bdf8"/>
+        <rect x="40" y="4" width="16" height="16" rx="2" stroke="#38bdf8" stroke-width="2"/>
+        <rect x="44" y="8" width="8" height="8" fill="#38bdf8"/>
+        <rect x="4" y="40" width="16" height="16" rx="2" stroke="#38bdf8" stroke-width="2"/>
+        <rect x="8" y="44" width="8" height="8" fill="#38bdf8"/>
+        <rect x="28" y="4" width="4" height="4" fill="#818cf8"/>
+        <rect x="28" y="12" width="4" height="4" fill="#818cf8"/>
+        <rect x="4" y="28" width="4" height="4" fill="#818cf8"/>
+        <rect x="12" y="28" width="4" height="4" fill="#818cf8"/>
+        <rect x="40" y="28" width="8" height="4" fill="#818cf8"/>
+        <rect x="28" y="40" width="4" height="8" fill="#818cf8"/>
+        <rect x="40" y="40" width="4" height="4" fill="#818cf8"/>
+        <rect x="48" y="48" width="8" height="8" rx="1" fill="#38bdf8" opacity=".5"/>
+      </svg>
+      <p>Your QR Code will appear here</p>
+      <p>Select an input mode, fill the form, and click Generate</p>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =====================================================================
+   MODE TABS
+   ===================================================================== */
+let currentMode = 'identity';
+document.getElementById('modeTabs').addEventListener('click', e => {
+  const btn = e.target.closest('.mode-tab');
+  if (!btn) return;
+  document.querySelectorAll('.mode-tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  currentMode = btn.dataset.mode;
+  document.getElementById('panel-' + currentMode).classList.add('active');
+});
+
+/* =====================================================================
+   EC PILLS
+   ===================================================================== */
+let ecLevel = 'M';
+document.getElementById('ecPills').addEventListener('click', e => {
+  const btn = e.target.closest('.ec-pill');
+  if (!btn) return;
+  document.querySelectorAll('.ec-pill').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  ecLevel = btn.dataset.ec;
+});
+
+/* =====================================================================
+   WIFI SECURITY TOGGLE
+   ===================================================================== */
+let wifiSec = 'WPA';
+document.getElementById('wifiSec').addEventListener('click', e => {
+  const btn = e.target.closest('.seg-btn');
+  if (!btn) return;
+  document.querySelectorAll('#wifiSec .seg-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  wifiSec = btn.dataset.sec;
+});
+
+/* =====================================================================
+   COLOR SYNC
+   ===================================================================== */
+function syncColor(colorId, hexId) {
+  document.getElementById(colorId).addEventListener('input', e => {
+    document.getElementById(hexId).value = e.target.value;
+  });
+  document.getElementById(hexId).addEventListener('input', e => {
+    const v = e.target.value.trim();
+    if (/^#[0-9a-fA-F]{6}$/.test(v)) document.getElementById(colorId).value = v;
+  });
+}
+syncColor('fgColor','fgHex'); syncColor('bgColor','bgHex');
+
+/* =====================================================================
+   MODULE SIZE CUSTOM
+   ===================================================================== */
+document.getElementById('optSize').addEventListener('change', e => {
+  const cf = document.getElementById('customSizeField');
+  cf.style.display = e.target.value === 'custom' ? 'block' : 'none';
+});
+
+/* =====================================================================
+   BUILD QR PAYLOAD
+   ===================================================================== */
+function buildPayload() {
+  switch (currentMode) {
+    case 'identity': {
+      const name = document.getElementById('iName').value.trim();
+      const serial = document.getElementById('iSerial').value.trim();
+      const idnum = document.getElementById('iIdnum').value.trim();
+      const dob = document.getElementById('iDob').value;
+      const parts = [];
+      if (name) parts.push('N:' + name);
+      if (serial) parts.push('SN:' + serial);
+      if (idnum) parts.push('ID:' + idnum);
+      if (dob) parts.push('DOB:' + dob);
+      if (!parts.length) return null;
+      return parts.join('|');
+    }
+    case 'text': {
+      const t = document.getElementById('pText').value.trim();
+      return t || null;
+    }
+    case 'url': {
+      const u = document.getElementById('pUrl').value.trim();
+      return u || null;
+    }
+    case 'wifi': {
+      const ssid = document.getElementById('wSSID').value.trim();
+      const pass = document.getElementById('wPass').value;
+      const hidden = document.getElementById('wHidden').value;
+      if (!ssid) return null;
+      const sec = wifiSec === 'nopass' ? 'nopass' : wifiSec;
+      const p = wifiSec === 'nopass' ? '' : pass;
+      return `WIFI:T:${sec};S:${ssid};P:${p};H:${hidden};;`;
+    }
+    case 'vcard': {
+      const fn = document.getElementById('vcFirst').value.trim();
+      const ln = document.getElementById('vcLast').value.trim();
+      const phone = document.getElementById('vcPhone').value.trim();
+      const email = document.getElementById('vcEmail').value.trim();
+      const org = document.getElementById('vcOrg').value.trim();
+      const addr = document.getElementById('vcAddr').value.trim();
+      const url = document.getElementById('vcUrl').value.trim();
+      if (!fn && !ln) return null;
+      const fullName = [fn, ln].filter(Boolean).join(' ');
+      return [
+        'BEGIN:VCARD',
+        'VERSION:3.0',
+        'FN:' + fullName,
+        'N:' + ln + ';' + fn + ';;;',
+        phone ? 'TEL;TYPE=CELL:' + phone : '',
+        email ? 'EMAIL:' + email : '',
+        org ? 'ORG:' + org : '',
+        addr ? 'ADR:;;' + addr + ';;;;' : '',
+        url ? 'URL:' + url : '',
+        'END:VCARD'
+      ].filter(Boolean).join('\n');
+    }
+    case 'email': {
+      const to = document.getElementById('emTo').value.trim();
+      const sub = encodeURIComponent(document.getElementById('emSubject').value.trim());
+      const body = encodeURIComponent(document.getElementById('emBody').value.trim());
+      if (!to) return null;
+      return `mailto:${to}?subject=${sub}&body=${body}`;
+    }
+    case 'sms': {
+      const phone = document.getElementById('smsPhone').value.trim();
+      const msg = encodeURIComponent(document.getElementById('smsMsg').value.trim());
+      if (!phone) return null;
+      return `sms:${phone}?body=${msg}`;
+    }
+    default: return null;
+  }
+}
+
+/* =====================================================================
+   QR SVG GENERATOR
+   ===================================================================== */
+function buildQRSVG(text, ec, moduleSize, margin, fgCol, bgCol) {
+  const qr = qrcode(0, ec);
+  qr.addData(text, 'Byte');
+  qr.make();
+  const mc = qr.getModuleCount();
+  const total = mc + 2 * margin;
+  const sz = total * moduleSize;
+
+  let rects = '';
+  for (let r = 0; r < mc; r++) {
+    for (let c = 0; c < mc; c++) {
+      if (qr.isDark(r, c)) {
+        const x = (c + margin) * moduleSize;
+        const y = (r + margin) * moduleSize;
+        rects += `<rect x="${x}" y="${y}" width="${moduleSize}" height="${moduleSize}"/>`;
+      }
+    }
+  }
+
+  return {
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}" shape-rendering="crispEdges">
+  <rect width="${sz}" height="${sz}" fill="${bgCol}"/>
+  <g fill="${fgCol}">${rects}</g>
+</svg>`,
+    size: sz,
+    mc,
+    total
+  };
+}
+
+/* =====================================================================
+   GENERATE
+   ===================================================================== */
+let currentSVG = '';
+let currentSize = 0;
+
+document.getElementById('generateBtn').addEventListener('click', () => {
+  const payload = buildPayload();
+  if (!payload) { showToast('⚠️ Please fill in required fields.'); return; }
+
+  const sizeVal = document.getElementById('optSize').value;
+  const modSz = sizeVal === 'custom'
+    ? parseInt(document.getElementById('optCustomSize').value) || 8
+    : parseInt(sizeVal);
+  const margin = parseInt(document.getElementById('optMargin').value);
+  const fgCol  = document.getElementById('fgHex').value || '#000000';
+  const bgCol  = document.getElementById('bgHex').value || '#ffffff';
+
+  const btn = document.getElementById('generateBtn');
+  btn.textContent = 'Generating…'; btn.disabled = true;
+
+  setTimeout(() => {
+    try {
+      const { svg, size, mc } = buildQRSVG(payload, ecLevel, modSz, margin, fgCol, bgCol);
+      currentSVG = svg;
+      currentSize = size;
+
+      document.getElementById('qrStage').innerHTML = svg;
+      document.getElementById('qrMeta').textContent =
+        `${size}×${size}px · ${mc}×${mc} modules · EC: ${ecLevel} · ${modSz}px/module`;
+      document.getElementById('encodedData').innerHTML =
+        `<strong>Mode:</strong> ${currentMode.toUpperCase()}<br><strong>Payload:</strong> ${payload.slice(0,200).replace(/</g,'&lt;')}${payload.length>200?'…':''}`;
+
+      document.getElementById('emptyState').style.display = 'none';
+      document.getElementById('previewWrap').classList.add('visible');
+      showToast('✓ QR Code generated!');
+    } catch (err) {
+      showToast('Error: ' + err.message);
+      console.error(err);
+    }
+    btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="5" height="5" rx="1"/><rect x="16" y="3" width="5" height="5" rx="1"/><rect x="3" y="16" width="5" height="5" rx="1"/><circle cx="16.5" cy="16.5" r="2.5"/><line x1="12" y1="3" x2="12" y2="12"/><line x1="3" y1="12" x2="12" y2="12"/></svg> Generate QR Code`;
+    btn.disabled = false;
+  }, 60);
+});
+
+/* =====================================================================
+   DOWNLOAD SVG
+   ===================================================================== */
+document.getElementById('downloadSvg').addEventListener('click', () => {
+  if (!currentSVG) return;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([currentSVG], {type:'image/svg+xml'}));
+  a.download = `qrcode_${Date.now()}.svg`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  showToast('✓ SVG downloaded!');
+});
+
+/* =====================================================================
+   DOWNLOAD PNG (4× retina)
+   ===================================================================== */
+document.getElementById('downloadPng').addEventListener('click', () => {
+  if (!currentSVG) return;
+  const scale = 4;
+  const img = new Image();
+  const blob = new Blob([currentSVG], {type:'image/svg+xml;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  img.onload = () => {
+    const canvas = document.createElement('canvas');
+    canvas.width = currentSize * scale;
+    canvas.height = currentSize * scale;
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    URL.revokeObjectURL(url);
+    canvas.toBlob(pblob => {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(pblob);
+      a.download = `qrcode_${Date.now()}@4x.png`;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      showToast('✓ PNG downloaded (4× retina)!');
+    }, 'image/png');
+  };
+  img.onerror = () => showToast('PNG export failed.');
+  img.src = url;
+});
+
+/* =====================================================================
+   COPY SVG
+   ===================================================================== */
+document.getElementById('copySvg').addEventListener('click', async () => {
+  if (!currentSVG) return;
+  try { await navigator.clipboard.writeText(currentSVG); showToast('✓ SVG copied!'); }
+  catch { showToast('Could not copy automatically.'); }
+});
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2600);
+}
+</script>
+</body>
+</html>
